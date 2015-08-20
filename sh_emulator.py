@@ -1,7 +1,5 @@
 import os
 import sys
-from collections import defaultdict
-
 
 class ShEmulator:
     def __init__(self):
@@ -48,16 +46,35 @@ class ShEmulator:
 class ShellCompletor:
     class Trie:
         def __init__(self):
-            self.nxt = defaultdict(ShellCompletor.Trie)
+            self.nxt = dict()
             self.isString = False
-            
+
+        def Go(self, token):
+            '''
+                Caller should handle KeyError exception
+            '''
+            return self.nxt[token]
+
+        def GoAndCreate(self, token):
+            if not self.nxt.has_key(token):
+                self.nxt[token] = ShellCompletor.Trie()
+            return self.nxt[token]
+
     def __init__(self):
         self._root = ShellCompletor.Trie()
 
     @staticmethod
     def _Go(start, string):
         return reduce(
-            lambda ac, char: ac.nxt[char],
+            lambda ac, char: ac.Go(char),
+            string,
+            start
+        )
+
+    @staticmethod
+    def _GoAndCreate(start, string):
+        return reduce(
+            lambda ac, char: ac.GoAndCreate(char),
             string,
             start
         )
@@ -82,7 +99,7 @@ class ShellCompletor:
         return results
 
     def Add(self, string):
-        self._Go(self._root, string).isString = True
+        self._GoAndCreate(self._root, string).isString = True
 
 #    def Delete(self, string):
 #        self
@@ -95,7 +112,10 @@ class ShellCompletor:
                 candidates     - a list of possible candidates
         '''
         complete_chars = ""
-        pos = self._Go(self._root, prefix_string)
+        try:
+            pos = self._Go(self._root, prefix_string)
+        except KeyError:
+            return ("", [""])
         while len(pos.nxt) == 1 and not pos.isString:
             char, pos = pos.nxt.items()[0]
             complete_chars += char
