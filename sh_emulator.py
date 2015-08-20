@@ -45,6 +45,32 @@ class ShEmulator:
                     self.NewLineHandler()
                 else:
                     self.OtherKeyHandler(k)
+
+class ShellHistory:
+    def __init__(self):
+        self._history = [""]
+        self._index = 0
+
+    def GoBack(self, HistoryFeedHandler):
+        if self._index == 0:
+            sys.stdout.write(chr(7))
+        else:
+            self._index -= 1
+            HistoryFeedHandler(self._history[self._index])
+
+    def GoForward(self, HistoryFeedHandler):
+        if self._index+1 >= len(self._history):
+            sys.stdout.write(chr(7))
+        else:
+            self._index += 1
+            HistoryFeedHandler(self._history[self._index])
+
+    def AddNewAndRewind(self, NewString):
+        self._history[-1] = NewString
+        self._history.append("")
+        self._index = len(self._history)-1
+
+
 class ShellCompletor:
     class Trie:
         def __init__(self):
