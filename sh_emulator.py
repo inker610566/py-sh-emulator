@@ -43,6 +43,32 @@ class ShEmulator:
                     self.NewLineHandler()
                 else:
                     self.OtherKeyHandler(k)
+
+class ShellHistory:
+    def __init__(self):
+        self._history = [""]
+        self._index = 0
+
+    def GoBack(self, HistoryFeedHandler):
+        if self._index == 0:
+            sys.stdout.write(chr(7))
+        else:
+            self._index -= 1
+            HistoryFeedHandler(self._history[self._index])
+
+    def GoForward(self, HistoryFeedHandler):
+        if self._index+1 >= len(self._history):
+            sys.stdout.write(chr(7))
+        else:
+            self._index += 1
+            HistoryFeedHandler(self._history[self._index])
+
+    def AddNewAndRewind(self, NewString):
+        self._history[-1] = NewString
+        self._history.append("")
+        self._index = len(self._history)-1
+
+
 class ShellCompletor:
     class Trie:
         def __init__(self):
@@ -133,22 +159,21 @@ class WinCmd:
                 self._inbuf.pop()
 
         def printKey(k):
-            self._SendString(chr(k))
+            self._SendPrompt(chr(k))
 
         def WinNewLineHandler():
-            plen = len(self._inbuf)
+            cur_prompt = "".join(self._inbuf)
+            plen = len(cur_prompt)
             if plen == 0: return
-            sys.stdout.write(chr(8)*plen)
-            sys.stdout.write(chr(32)*plen)
-            sys.stdout.write(chr(13))
-            self._Handle("".join(self._inbuf))
-            self._inbuf = []
+            self._ClearPrompt()
+            self._history.AddNewAndRewind(cur_prompt)
+            self._Handle(cur_prompt)
 
         def TabHandler():
             cur_string = "".join(self._inbuf)
             to_complete, candidates = self._completor.Query(cur_string)
             if to_complete:
-                self._SendString(to_complete)
+                self._SendPrompt(to_complete)
             elif len(candidates) != 1:
                 # show candidates
                 candidates = map(lambda s: cur_string+s, candidates)
@@ -158,15 +183,37 @@ class WinCmd:
                     [cur_string]
                 )))
 
+        def UpArrowHandler():
+            def GoHistory(cmd):
+                self._ClearPrompt()
+                self._SendPrompt(cmd)
+            self._history.GoBack(GoHistory)
+
+        def DownArrowHandler():
+            def GoHistory(cmd):
+                self._ClearPrompt()
+                self._SendPrompt(cmd)
+            self._history.GoForward(GoHistory)
+
         self._inbuf = []
         self._completor = ShellCompletor()
+        self._history = ShellHistory()
         self.pysh = ShEmulator()
-        self.pysh.OtherKeyHandler = printKey
-        self.pysh.BackspaceHandler = WinBackspaceHanlder
         self.pysh.NewLineHandler = WinNewLineHandler
+        self.pysh.UpArrowHandler = UpArrowHandler
+        self.pysh.DownArrowHandler = DownArrowHandler
+        self.pysh.BackspaceHandler = WinBackspaceHanlder
+        self.pysh.OtherKeyHandler = printKey
         self.pysh.TabHandler = TabHandler
 
-    def _SendString(self, string):
+    def _ClearPrompt(self):
+        plen = len(self._inbuf)
+        sys.stdout.write(chr(8)*plen)
+        sys.stdout.write(chr(32)*plen)
+        sys.stdout.write(chr(13))
+        self._inbuf = []
+
+    def _SendPrompt(self, string):
         for char in string:
             sys.stdout.write(char)
             self._inbuf.append(char)
