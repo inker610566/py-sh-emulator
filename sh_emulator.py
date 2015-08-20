@@ -162,13 +162,11 @@ class WinCmd:
             self._SendPrompt(chr(k))
 
         def WinNewLineHandler():
-            plen = len(self._inbuf)
+            cur_prompt = "".join(self._inbuf)
+            plen = len(cur_prompt)
             if plen == 0: return
-            sys.stdout.write(chr(8)*plen)
-            sys.stdout.write(chr(32)*plen)
-            sys.stdout.write(chr(13))
-            self._Handle("".join(self._inbuf))
-            self._inbuf = []
+            self._ClearPrompt()
+            self._Handle(cur_prompt)
 
         def TabHandler():
             cur_string = "".join(self._inbuf)
@@ -191,6 +189,13 @@ class WinCmd:
         self.pysh.BackspaceHandler = WinBackspaceHanlder
         self.pysh.NewLineHandler = WinNewLineHandler
         self.pysh.TabHandler = TabHandler
+
+    def _ClearPrompt(self):
+        plen = len(self._inbuf)
+        sys.stdout.write(chr(8)*plen)
+        sys.stdout.write(chr(32)*plen)
+        sys.stdout.write(chr(13))
+        self._inbuf = []
 
     def _SendPrompt(self, string):
         for char in string:
