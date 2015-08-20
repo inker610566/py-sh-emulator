@@ -166,6 +166,7 @@ class WinCmd:
             plen = len(cur_prompt)
             if plen == 0: return
             self._ClearPrompt()
+            self._history.AddNewAndRewind(cur_prompt)
             self._Handle(cur_prompt)
 
         def TabHandler():
