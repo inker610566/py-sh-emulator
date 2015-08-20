@@ -182,12 +182,27 @@ class WinCmd:
                     [cur_string]
                 )))
 
+        def UpArrowHandler():
+            def GoHistory(cmd):
+                self._ClearPrompt()
+                self._SendPrompt(cmd)
+            self._history.GoBack(GoHistory)
+
+        def DownArrowHandler():
+            def GoHistory(cmd):
+                self._ClearPrompt()
+                self._SendPrompt(cmd)
+            self._history.GoForward(GoHistory)
+
         self._inbuf = []
         self._completor = ShellCompletor()
+        self._history = ShellHistory()
         self.pysh = ShEmulator()
-        self.pysh.OtherKeyHandler = printKey
-        self.pysh.BackspaceHandler = WinBackspaceHanlder
         self.pysh.NewLineHandler = WinNewLineHandler
+        self.pysh.UpArrowHandler = UpArrowHandler
+        self.pysh.DownArrowHandler = DownArrowHandler
+        self.pysh.BackspaceHandler = WinBackspaceHanlder
+        self.pysh.OtherKeyHandler = printKey
         self.pysh.TabHandler = TabHandler
 
     def _ClearPrompt(self):
