@@ -117,6 +117,7 @@ class WinCmd:
 
         def WinNewLineHandler():
             plen = len(self._inbuf)
+            if plen == 0: return
             sys.stdout.write(chr(8)*plen)
             sys.stdout.write(chr(32)*plen)
             sys.stdout.write(chr(13))
