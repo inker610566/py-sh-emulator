@@ -159,7 +159,7 @@ class WinCmd:
                 self._inbuf.pop()
 
         def printKey(k):
-            self._SendString(chr(k))
+            self._SendPrompt(chr(k))
 
         def WinNewLineHandler():
             plen = len(self._inbuf)
@@ -174,7 +174,7 @@ class WinCmd:
             cur_string = "".join(self._inbuf)
             to_complete, candidates = self._completor.Query(cur_string)
             if to_complete:
-                self._SendString(to_complete)
+                self._SendPrompt(to_complete)
             elif len(candidates) != 1:
                 # show candidates
                 candidates = map(lambda s: cur_string+s, candidates)
@@ -192,7 +192,7 @@ class WinCmd:
         self.pysh.NewLineHandler = WinNewLineHandler
         self.pysh.TabHandler = TabHandler
 
-    def _SendString(self, string):
+    def _SendPrompt(self, string):
         for char in string:
             sys.stdout.write(char)
             self._inbuf.append(char)
